@@ -78,16 +78,19 @@ actor Extctoken {
     };
   };
 
+  // Função que retorna o Principal do próprio canister
   public query func getCanisterPrincipal() : async Text {
     return Principal.toText(Principal.fromActor(Extctoken));
   };
 
+  // Função que retorna o saldo do próprio canister
   public func getCanisterBalance() : async Nat {
     let owner = Principal.fromActor(Extctoken);
     let balance = await getBalance(owner);
     return balance;
   };
 
+  // Função que retorna o saldo de um principal qualquer
   public func getBalance(owner : Principal) : async Nat {
     let balance = await ExtcLedger.icrc1_balance_of({
       owner = owner;
@@ -96,6 +99,7 @@ actor Extctoken {
     return balance;
   };
 
+  // Função para realizar transferência ICRC-2 usando icrc2_transfer_from
   public shared (msg) func transferFrom(to : Principal, amount : Nat) : async Result.Result<ExtcLedger.BlockIndex, Text> {
     let transferFromArgs : ExtcLedger.TransferFromArgs = {
       spender_subaccount = null;
@@ -119,12 +123,13 @@ actor Extctoken {
     };
   };
 
+  // Função para retornar todas as informações do token em um único objeto
   public func getTokenInfo() : async TokenInfo {
     let name = await getTokenName();
     let symbol = await getTokenSymbol();
     let supply = await getTokenTotalSupply();
     let minter = await getTokenMintingPrincipal();
-    let fee : Nat = 10_000; 
+    let fee : Nat = 10_000;
 
     return {
       name = name;
