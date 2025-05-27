@@ -10,6 +10,14 @@ actor Extctoken {
     toAccount : ExtcLedger.Account;
   };
 
+  type TokenInfo = {
+    name : Text;
+    symbol : Text;
+    fee : Nat;
+    totalSupply : Nat;
+    mintingPrincipal : Text;
+  };
+
   // Obter o nome do token
   public func getTokenName() : async Text {
     let name = await ExtcLedger.icrc1_name();
@@ -86,6 +94,45 @@ actor Extctoken {
       subaccount = null;
     });
     return balance;
+  };
+
+  public shared (msg) func transferFrom(to : Principal, amount : Nat) : async Result.Result<ExtcLedger.BlockIndex, Text> {
+    let transferFromArgs : ExtcLedger.TransferFromArgs = {
+      spender_subaccount = null;
+      from = { owner = msg.caller; subaccount = null };
+      to = { owner = to; subaccount = null };
+      amount = amount;
+      fee = null;
+      memo = null;
+      created_at_time = null;
+    };
+    try {
+      let transferResult = await ExtcLedger.icrc2_transfer_from(transferFromArgs);
+      switch (transferResult) {
+        case (#Err(transferError)) {
+          return #err("Não foi possível transferir fundos:\n" # debug_show (transferError));
+        };
+        case (#Ok(blockIndex)) { return #ok blockIndex };
+      };
+    } catch (error : Error) {
+      return #err("Mensagem de rejeição: " # Error.message(error));
+    };
+  };
+
+  public func getTokenInfo() : async TokenInfo {
+    let name = await getTokenName();
+    let symbol = await getTokenSymbol();
+    let supply = await getTokenTotalSupply();
+    let minter = await getTokenMintingPrincipal();
+    let fee : Nat = 10_000; 
+
+    return {
+      name = name;
+      symbol = symbol;
+      fee = fee;
+      totalSupply = supply;
+      mintingPrincipal = minter;
+    };
   };
 
 };
